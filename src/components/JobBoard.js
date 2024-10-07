@@ -92,7 +92,7 @@ const JobBoard = () => {
   
 
   return (
-    <div className="min-h-screen flex flex-col font-sans select-none">
+    <div className="min-h-screen flex flex-col font-sans">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <img src="/logo.jpg" alt="Trovit Logo" className="w-32" />
