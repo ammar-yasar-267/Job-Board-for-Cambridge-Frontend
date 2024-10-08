@@ -277,49 +277,65 @@ const FilterSection = ({ title, children, last = false }) => (
   </div>
 );
 
-const JobCard = ({ job }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md mb-4 hover:shadow-lg transition duration-300">
-    <h3 className="text-xl font-semibold mb-2 text-green-600">{job.job_title}</h3>
-    <p className="font-semibold text-gray-700">{job.company}</p>
-    <div className="flex flex-wrap items-center mt-2 text-gray-600">
-      <div className="flex items-center mr-4 mb-2">
-        <MapPin size={18} className="mr-1" />
-        <span>{job.location}</span>
-      </div>
-      <div className="flex items-center mr-4 mb-2">
-        <CreditCard size={18} className="mr-1" />
-        <span>£{job.salary_min} - £{job.salary_max} {job.salary_max ? 'Per Year' : ''}</span>
-      </div>
-      {job.contract_type && (
+const JobCard = ({ job }) => {
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
+  const toggleDescription = () => {
+    setShowFullDescription(!showFullDescription);
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md mb-4 hover:shadow-lg transition duration-300">
+      <h3 className="text-xl font-semibold mb-2 text-green-600">{job.job_title}</h3>
+      <p className="font-semibold text-gray-700">{job.company}</p>
+      <div className="flex flex-wrap items-center mt-2 text-gray-600">
         <div className="flex items-center mr-4 mb-2">
-          <Briefcase size={18} className="mr-1" />
-          <span>{job.contract_type === 'permanent' ? 'Permanent' : job.contract_type === 'contract' ? 'Contract' : job.contract_type}</span>
+          <MapPin size={18} className="mr-1" />
+          <span>{job.location}</span>
         </div>
-      )}
-      {job.contract_time && (
         <div className="flex items-center mr-4 mb-2">
-          <Clock size={18} className="mr-1" />
-          <span>{job.contract_time === 'part_time' ? 'Part Time' : job.contract_time === 'full_time' ? 'Full Time' : job.contract_time}</span>
+          <CreditCard size={18} className="mr-1" />
+          <span>£{job.salary_min} - £{job.salary_max} {job.salary_max ? 'Per Year' : ''}</span>
         </div>
-      )}
-      {job.date_posted && (
-        <div className="flex items-center mb-2">
-          <Calendar size={18} className="mr-1" />
-          <span>Posted {new Date(job.date_posted).toLocaleDateString()}</span>
-        </div>
-      )}
+        {job.contract_type && (
+          <div className="flex items-center mr-4 mb-2">
+            <Briefcase size={18} className="mr-1" />
+            <span>{job.contract_type === 'permanent' ? 'Permanent' : job.contract_type === 'contract' ? 'Contract' : job.contract_type}</span>
+          </div>
+        )}
+        {job.contract_time && (
+          <div className="flex items-center mr-4 mb-2">
+            <Clock size={18} className="mr-1" />
+            <span>{job.contract_time === 'part_time' ? 'Part Time' : job.contract_time === 'full_time' ? 'Full Time' : job.contract_time}</span>
+          </div>
+        )}
+        {job.date_posted && (
+          <div className="flex items-center mb-2">
+            <Calendar size={18} className="mr-1" />
+            <span>Posted {new Date(job.date_posted).toLocaleDateString()}</span>
+          </div>
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-gray-700">
+          {showFullDescription ? job.description : `${job.description.substring(0, 100)}...`}
+          <button onClick={toggleDescription} className="text-green-600 hover:underline ml-2">
+            {showFullDescription ? 'Show less' : 'Show more'}
+          </button>
+        </p>
+      </div>
+      <div className="mt-4">
+        <a 
+          href={job.redirect_url} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-300"
+        >
+          View Job
+        </a>
+      </div>
     </div>
-    <div className="mt-4">
-      <a 
-        href={job.redirect_url} 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-300"
-      >
-        View Job
-      </a>
-    </div>
-  </div>
-);
+  );
+};
 
 export default AllJobsPage;

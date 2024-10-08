@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import { Search, Briefcase, MapPin, Clock, CreditCard, Calendar } from 'lucide-react';
 
 const StaticJobsRenderer = ({ htmlContent }) => {
   return (
-    <div 
+    <div
       className="w-full"
-      dangerouslySetInnerHTML={{ __html: htmlContent }} 
+      dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );
 };
 
 const AllJobsFromCategoryPage = () => {
   const [staticHtml, setStaticHtml] = useState('');
+  const [metadata, setMetadata] = useState(null);
+  const [structuredData, setStructuredData] = useState(null);
   const { category } = useParams();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,15 +25,35 @@ const AllJobsFromCategoryPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  // Filter states
-  const [sortBy, setSortBy] = useState('');
-  const [datePosted, setDatePosted] = useState('');
-  const [salaryRange, setSalaryRange] = useState('');
-  const [isRemote, setIsRemote] = useState(false);
-  const [location, setLocation] = useState('');
-  const [company, setCompany] = useState('');
-  const [contractType, setContractType] = useState('');
-  const [hours, setHours] = useState('');
+
+  const fetchJobs = async (filters) => {
+    try {
+      const queryParams = new URLSearchParams({
+        ...(filters.sortBy && { sortBy: filters.sortBy }),
+        ...(filters.datePosted && { datePosted: filters.datePosted }),
+        ...(filters.salaryRange && { salaryRange: filters.salaryRange }),
+        ...(filters.isRemote && { isRemote: filters.isRemote }),
+        ...(filters.location && { location: filters.location }),
+        ...(filters.company && { company: filters.company }),
+        ...(filters.contractType && { contractType: filters.contractType }),
+        ...(filters.hours && { hours: filters.hours })
+      });
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/jobs/${category}?${queryParams}`
+      );
+
+      const data = await response.json();
+
+      // Directly use the jobs array
+      setJobs(data.jobs || []);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -59,118 +82,43 @@ const AllJobsFromCategoryPage = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...jobs];
-
-    // Filter by location
-    if (location) {
-      filtered = filtered.filter(job => 
-        job.location.toLowerCase().includes(location.toLowerCase())
-      );
-    }
-
-    // Filter by remote jobs
-    if (isRemote) {
-      filtered = filtered.filter(job => job.is_remote);
-    }
-
-    // Filter by salary range
-    if (salaryRange) {
-      const [min, max] = salaryRange.split('-').map(Number);
-      filtered = filtered.filter(job => {
-        const jobSalaryMin = job.salary_min || 0;
-        const jobSalaryMax = job.salary_max || Infinity;
-        return jobSalaryMin >= min && jobSalaryMax <= max;
-      });
-    }
-
-    // Filter by contract type
-    if (contractType) {
-      filtered = filtered.filter(job => job.contract_type === contractType);
-    }
-
-    // Filter by hours
-    if (hours) {
-      filtered = filtered.filter(job => job.contract_time === hours);
-    }
-
-    // Filter by date posted
-    if (datePosted) {
-      const daysOld = parseInt(datePosted);
-      const currentDate = new Date();
-      filtered = filtered.filter(job => {
-        const jobDate = new Date(job.date_posted);
-        const differenceInDays = (currentDate - jobDate) / (1000 * 60 * 60 * 24);
-        return differenceInDays <= daysOld;
-      });
-    }
-
-    // Sort by criteria
-    if (sortBy) {
-      filtered.sort((a, b) => {
-        if (sortBy === 'salary_asc') {
-          return (a.salary_min || 0) - (b.salary_min || 0);
-        } else if (sortBy === 'salary_desc') {
-          return (b.salary_max || 0) - (a.salary_max || 0);
-        } else if (sortBy === 'date_posted') {
-          return new Date(b.date_posted) - new Date(a.date_posted);
-        }
-        return 0;
-      });
-    }
-
-    setFilteredJobs(filtered);
-  };
-
-  const fetchJobs = async (filters) => {
-    try {
-      const queryParams = new URLSearchParams({
-        ...(filters.sortBy && { sortBy: filters.sortBy }),
-        ...(filters.datePosted && { datePosted: filters.datePosted }),
-        ...(filters.salaryRange && { salaryRange: filters.salaryRange }),
-        ...(filters.isRemote && { isRemote: filters.isRemote }),
-        ...(filters.location && { location: filters.location }),
-        ...(filters.company && { company: filters.company }),
-        ...(filters.contractType && { contractType: filters.contractType }),
-        ...(filters.hours && { hours: filters.hours })
-      });
-
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/pages/${category}?${queryParams}`
-      );
-      const data = await response.json();
-
-      // Directly use the jobs array
-      setJobs(data.jobs || []);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-      setJobs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchStaticHtml = async () => {
       setLoading(true); // Set loading to true before fetching data
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/pages/${category}`);
-        const data = await response.json();
-        console.log('Static HTML:', data[0].PageContentReact);
-        setStaticHtml(data[0].PageContentReact);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/jobs/${category}`);
+        
+        const { pageData, metadata } = await response.json();
+
+
+        // Console output the response data
+        setStaticHtml(pageData[0].PageContentReact);
+        console.log('Page data:', pageData[0]);
+
+        // print meta data stuff
+        setMetadata(metadata);
+        console.log('Meta data:', metadata);
+        console.log('Title:', metadata.title);
+        console.log('Description:', metadata.description);
+        console.log('Canonical URL:', metadata.canonicalUrl);
+
+        // print structured data
+        setStructuredData(await metadata.structuredData[0].PageStructuredData);
+
       } catch (error) {
         console.error('Error fetching static HTML:', error);
       } finally {
         setLoading(false); // Ensure loading is set to false after data is fetched
       }
     };
-  
+
     fetchStaticHtml();
   }, [category]);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   const handleSearch = () => {
     if (searchTerm) {
@@ -185,6 +133,27 @@ const AllJobsFromCategoryPage = () => {
   };
 
   return (
+    <>
+      {metadata && (
+        <>
+        {console.log('Structured Data:', structuredData)}
+        <Helmet>
+          <title>{metadata.title}</title>
+          <meta name="description" content={metadata.description} />
+          <link rel="canonical" href={metadata.canonicalUrl} />
+          
+          <meta property="og:title" content={metadata.title} />
+          <meta property="og:description" content={metadata.description} />
+          <meta property="og:url" content={metadata.canonicalUrl} />
+          <meta property="og:type" content="website" />
+          
+          <script type="application/ld+json">
+            {structuredData}
+          </script>
+        </Helmet>
+        </>
+      )}
+
     <div className="min-h-screen bg-gray-100">
       <div className="bg-green-600 p-6 shadow-md">
         <div className="container mx-auto">
@@ -215,78 +184,11 @@ const AllJobsFromCategoryPage = () => {
           </div>
         </div>
       </div>
-  
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-1/4">
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="font-bold text-xl mb-4 text-gray-800">Filter Results</h3>
-              <FilterSection title="Sort by">
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="">Default</option>
-                  <option value="date_posted">Date posted</option>
-                  <option value="salary_asc">Salary (Low to High)</option>
-                  <option value="salary_desc">Salary (High to Low)</option>
-                </select>
-              </FilterSection>
-  
-              <FilterSection title="Date posted">
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={datePosted}
-                  onChange={(e) => setDatePosted(e.target.value)}
-                >
-                  <option value="">Any time</option>
-                  <option value="1">Last 24 hours</option>
-                  <option value="7">Last 7 days</option>
-                  <option value="30">Last 30 days</option>
-                </select>
-              </FilterSection>
-  
-              <FilterSection title="Salary">
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={salaryRange}
-                  onChange={(e) => setSalaryRange(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="0-30000">Up to £30,000</option>
-                  <option value="30000-50000">£30,000 - £50,000</option>
-                  <option value="50000-75000">£50,000 - £75,000</option>
-                  <option value="75000-100000">£75,000 - £100,000</option>
-                  <option value="100000-999999">£100,000+</option>
-                </select>
-              </FilterSection>
-  
-              <FilterSection title="Contract type">
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={contractType}
-                  onChange={(e) => setContractType(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="permanent">Permanent</option>
-                  <option value="contract">Contract</option>
-                </select>
-              </FilterSection>
-  
-              <FilterSection title="Hours" last={true}>
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                </select>
-              </FilterSection>
-            </div>
-  
+          <div className="w-full md:w-1/4 min-h-6">
+
             <div className="bg-white py-5 rounded-lg shadow-md p-6">
               <h3 className="font-bold text-xl mb-4 text-gray-800">Explore Categories</h3>
               {!loadingCategories && (
@@ -312,7 +214,7 @@ const AllJobsFromCategoryPage = () => {
               )}
             </div>
           </div>
-  
+
           <div className="w-full md:flex-grow">
             {loading ? (
               <div className="flex justify-center items-center h-64">
@@ -325,7 +227,8 @@ const AllJobsFromCategoryPage = () => {
         </div>
       </div>
     </div>
-  );  
+    </>
+  );
 };
 
 const FilterSection = ({ title, children, last = false }) => (
@@ -368,10 +271,10 @@ const JobCard = ({ job }) => (
       )}
     </div>
     <div className="mt-4">
-      <a 
-        href={job.redirect_url} 
-        target="_blank" 
-        rel="noopener noreferrer" 
+      <a
+        href={job.redirect_url}
+        target="_blank"
+        rel="noopener noreferrer"
         className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-300"
       >
         View Job
