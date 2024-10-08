@@ -142,6 +142,7 @@ const AllJobsFromCategoryPage = () => {
           <meta name="description" content={metadata.description} />
           <link rel="canonical" href={metadata.canonicalUrl} />
           
+          <meta name="robots" content="index, follow"/>
           <meta property="og:title" content={metadata.title} />
           <meta property="og:description" content={metadata.description} />
           <meta property="og:url" content={metadata.canonicalUrl} />
