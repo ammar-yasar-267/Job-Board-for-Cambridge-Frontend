@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Briefcase, MapPin, Clock, CreditCard, Calendar } from 'lucide-react';
+import { Search, Briefcase, MapPin, Clock, CreditCard, Calendar, ArrowLeft } from 'lucide-react';
+import FilterDrawer from './CustomFilter';
 
 const AllJobsPage = () => {
   const { keyword } = useParams();
   const [jobs, setJobs] = useState([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +96,10 @@ const AllJobsPage = () => {
     }
   };
 
+  const toggleFilter = () => {
+    setIsFilterOpen(!isFilterOpen);
+  };
+
   useEffect(() => {
     fetchJobs();
   }, [keyword, sortBy, datePosted, salaryRange, isRemote, location, company, contractType, hours]);
@@ -119,107 +125,205 @@ const AllJobsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="bg-green-600 p-6 shadow-md">
-        <div className="container mx-auto">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-grow">
+      <div className="bg-green-600 p-4 md:p-6 shadow-md">
+          <div className="container mx-auto">
+            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="Go back to previous page"
+                className="group bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+              >
+                <ArrowLeft className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform duration-200" />
+              </button>
+              <div className="relative flex-grow w-full md:ml-4">
+                <input
+                  type="text"
+                  placeholder="What job are you looking for?"
+                  className="w-full p-3 pr-10 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <Search className="absolute right-3 top-3 text-green-600" />
+              </div>
               <input
                 type="text"
-                placeholder="What job are you looking for?"
-                className="w-full p-3 pr-10 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleKeyDown}
+                placeholder="Cambridge"
+                className="w-full md:w-48 p-3 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
+                value="Cambridge"
+                readOnly={true}
               />
-              <Search className="absolute right-3 top-3 text-green-600" />
+              <button
+                onClick={handleSearch}
+                className="w-full md:w-auto bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 transition duration-300"
+              >
+                Search Jobs
+              </button>
             </div>
-            <input
-              type="text"
-              placeholder="Cambridge"
-              className="w-48 p-3 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
-              value="Cambridge"
-              readOnly={true}
-            />
-            <button
-              onClick={handleSearch}
-              className="bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 transition duration-300"
-            >
-              Search Jobs
-            </button>
           </div>
         </div>
-      </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-1/4 gap-x-4">
+
+          
+        <FilterDrawer
+            isOpen={isFilterOpen}
+            onClose={setIsFilterOpen}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            datePosted={datePosted}
+            setDatePosted={setDatePosted}
+            salaryRange={salaryRange}
+            setSalaryRange={setSalaryRange}
+            contractType={contractType}
+            setContractType={setContractType}
+            hours={hours}
+            setHours={setHours}
+          />
+
+          {/* Filter Drawer for Mobile */}
+          {isFilterOpen && (
+            <div className="md:hidden bg-white rounded-lg shadow-md p-6 mb-8">
+              <FilterSection title="Sort by">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="">Default</option>
+                <option value="relevance">Relevance</option>
+                <option value="date_asc">Date posted</option>
+                <option value="salary_asc">Salary (Low to High)</option>
+                <option value="salary_desc">Salary (High to Low)</option>
+              </select>
+            </FilterSection>
+
+            <FilterSection title="Date posted">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={datePosted}
+                onChange={(e) => setDatePosted(e.target.value)}
+              >
+                <option value="">Any time</option>
+                <option value="1">Last 24 hours</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+              </select>
+            </FilterSection>
+
+            <FilterSection title="Salary">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={salaryRange}
+                onChange={(e) => setSalaryRange(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="0-30000">Up to £30,000</option>
+                <option value="30000-50000">£30,000 - £50,000</option>
+                <option value="50000-75000">£50,000 - £75,000</option>
+                <option value="75000-100000">£75,000 - £100,000</option>
+                <option value="100000-999999">£100,000+</option>
+              </select>
+            </FilterSection>
+
+            <FilterSection title="Contract type">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={contractType}
+                onChange={(e) => setContractType(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="permanent">Permanent</option>
+                <option value="contract">Contract</option>
+              </select>
+            </FilterSection>
+
+            <FilterSection title="Hours" last={true}>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="full_time">Full Time</option>
+                <option value="part_time">Part Time</option>
+              </select>
+            </FilterSection>
+            </div>
+          )}
+
+          {/* Desktop Filter Section */}
+          <div className="hidden md:block w-full md:w-1/4 gap-x-4">
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
               <h3 className="font-bold text-xl mb-4 text-gray-800">Filter Results</h3>
               <FilterSection title="Sort by">
-                <select 
-                  className="w-full p-2 border rounded-md"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="">Default</option>
-                  <option value="relevance">Relevance</option>
-                  <option value="date_asc">Date posted</option>
-                  <option value="salary_asc">Salary (Low to High)</option>
-                  <option value="salary_desc">Salary (High to Low)</option>
-                </select>
-              </FilterSection>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="">Default</option>
+                <option value="relevance">Relevance</option>
+                <option value="date_asc">Date posted</option>
+                <option value="salary_asc">Salary (Low to High)</option>
+                <option value="salary_desc">Salary (High to Low)</option>
+              </select>
+            </FilterSection>
 
-              <FilterSection title="Date posted">
-                <select 
-                  className="w-full p-2 border rounded-md"
-                  value={datePosted}
-                  onChange={(e) => setDatePosted(e.target.value)}
-                >
-                  <option value="">Any time</option>
-                  <option value="1">Last 24 hours</option>
-                  <option value="7">Last 7 days</option>
-                  <option value="30">Last 30 days</option>
-                </select>
-              </FilterSection>
+            <FilterSection title="Date posted">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={datePosted}
+                onChange={(e) => setDatePosted(e.target.value)}
+              >
+                <option value="">Any time</option>
+                <option value="1">Last 24 hours</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+              </select>
+            </FilterSection>
 
-              <FilterSection title="Salary">
-                <select 
-                  className="w-full p-2 border rounded-md"
-                  value={salaryRange}
-                  onChange={(e) => setSalaryRange(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="0-30000">Up to £30,000</option>
-                  <option value="30000-50000">£30,000 - £50,000</option>
-                  <option value="50000-75000">£50,000 - £75,000</option>
-                  <option value="75000-100000">£75,000 - £100,000</option>
-                  <option value="100000-999999">£100,000+</option>
-                </select>
-              </FilterSection>
+            <FilterSection title="Salary">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={salaryRange}
+                onChange={(e) => setSalaryRange(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="0-30000">Up to £30,000</option>
+                <option value="30000-50000">£30,000 - £50,000</option>
+                <option value="50000-75000">£50,000 - £75,000</option>
+                <option value="75000-100000">£75,000 - £100,000</option>
+                <option value="100000-999999">£100,000+</option>
+              </select>
+            </FilterSection>
 
-              <FilterSection title="Contract type">
-                <select 
-                  className="w-full p-2 border rounded-md"
-                  value={contractType}
-                  onChange={(e) => setContractType(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="permanent">Permanent</option>
-                  <option value="contract">Contract</option>
-                </select>
-              </FilterSection>
+            <FilterSection title="Contract type">
+              <select
+                className="w-full p-2 border rounded-md"
+                value={contractType}
+                onChange={(e) => setContractType(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="permanent">Permanent</option>
+                <option value="contract">Contract</option>
+              </select>
+            </FilterSection>
 
-              <FilterSection title="Hours" last={true}>
-                <select 
-                  className="w-full p-2 border rounded-md"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                >
-                  <option value="">Any</option>
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                </select>
-              </FilterSection>
+            <FilterSection title="Hours" last={true}>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+              >
+                <option value="">Any</option>
+                <option value="full_time">Full Time</option>
+                <option value="part_time">Part Time</option>
+              </select>
+            </FilterSection>
+              {/* Add more filter sections as needed */}
             </div>
+
             <div className="bg-white py-5 rounded-lg shadow-md p-6">
               <h3 className="font-bold text-xl mb-4 text-gray-800">Explore Categories</h3>
               {!loadingCategories && (
@@ -228,10 +332,10 @@ const AllJobsPage = () => {
                     <div key={category}>
                       <h3 className="text-lg font-medium mb-3 text-gray-700">{category}</h3>
                       <ul className="space-y-2">
-                        {items.map(item => (
+                        {items.map((item) => (
                           <li key={item.pageName}>
-                            <a 
-                              href={`/category/${item.keyword}`} 
+                            <a
+                              href={`/category/${item.keyword}`}
                               className="text-green-600 hover:text-green-800 hover:underline text-sm transition duration-150 ease-in-out"
                             >
                               {item.keyword} jobs in Cambridge
@@ -245,6 +349,8 @@ const AllJobsPage = () => {
               )}
             </div>
           </div>
+
+          {/* Job Listings Section */}
           <div className="w-full md:w-3/4">
             {loading ? (
               <div className="flex justify-center items-center h-64">
@@ -253,9 +359,7 @@ const AllJobsPage = () => {
             ) : (
               <>
                 {filteredJobs.length > 0 ? (
-                  filteredJobs.map((job, index) => (
-                    <JobCard key={job.id || index} job={job} />
-                  ))
+                  filteredJobs.map((job, index) => <JobCard key={job.id || index} job={job} />)
                 ) : (
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <p className="text-gray-600">No jobs found matching your criteria.</p>
@@ -264,11 +368,39 @@ const AllJobsPage = () => {
               </>
             )}
           </div>
+
+          {/* Categories Section for Mobile */}
+        <div className="block md:hidden mt-8">
+          <div className="bg-white py-5 rounded-lg shadow-md p-6">
+            <h3 className="font-bold text-xl mb-4 text-gray-800">Explore Categories</h3>
+            {!loadingCategories && (
+              <div className="space-y-6">
+                {Object.entries(categories).map(([category, items]) => (
+                  <div key={category}>
+                    <h3 className="text-lg font-medium mb-3 text-gray-700">{category}</h3>
+                    <ul className="space-y-2">
+                      {items.map((item) => (
+                        <li key={item.pageName}>
+                          <a
+                            href={`/category/${item.keyword}`}
+                            className="text-green-600 hover:text-green-800 hover:underline text-sm transition duration-150 ease-in-out"
+                          >
+                            {item.keyword} jobs in Cambridge
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
+    </div>
   );
-};
+};  
 
 const FilterSection = ({ title, children, last = false }) => (
   <div className={`py-3 ${!last ? 'border-b border-gray-200' : ''}`}>
@@ -281,7 +413,7 @@ const JobCard = ({ job }) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   const toggleDescription = () => {
-    setShowFullDescription(!showFullDescription);
+    // Toggle the showFullDescription state
   };
 
   return (
@@ -316,12 +448,23 @@ const JobCard = ({ job }) => {
           </div>
         )}
       </div>
+      {/* <div class="mt-4">
+            <p class="text-gray-700">
+              ${job.description.length > 280 ? `
+                <span class="job-description">
+                  <span class="truncated-description">${job.description.substring(0, 280)}...</span>
+                  <span class="full-description">${job.description}</span>
+                  <a href="${job.redirect_url}" target="_blank" rel="noopener noreferrer"><button class="show-more-button">Show more</button>
+                </span>
+              ` : job.description}
+            </p>
+          </div> */}
       <div className="mt-4">
         <p className="text-gray-700">
-          {showFullDescription ? job.description : `${job.description.substring(0, 100)}...`}
-          <button onClick={toggleDescription} className="text-green-600 hover:underline ml-2">
+          {showFullDescription ? job.description : `${job.description.substring(0, 250)}...`}
+          <a href={job.redirect_url} target="_blank" rel="noopener noreferrer"><button onClick={toggleDescription} className="text-green-600 hover:underline ml-2">
             {showFullDescription ? 'Show less' : 'Show more'}
-          </button>
+          </button></a>
         </p>
       </div>
       <div className="mt-4">

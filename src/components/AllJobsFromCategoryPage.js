@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { Search, Briefcase, MapPin, Clock, CreditCard, Calendar } from 'lucide-react';
+import { Search, Briefcase, MapPin, Clock, CreditCard, Calendar, ArrowLeft } from 'lucide-react';
 
 const StaticJobsRenderer = ({ htmlContent }) => {
   return (
@@ -136,60 +136,64 @@ const AllJobsFromCategoryPage = () => {
     <>
       {metadata && (
         <>
-        {console.log('Structured Data:', structuredData)}
-        <Helmet>
-          <title>{metadata.title}</title>
-          <meta name="description" content={metadata.description} />
-          <link rel="canonical" href={metadata.canonicalUrl} />
-          
-          <meta name="robots" content="index, follow"/>
-          <meta property="og:title" content={metadata.title} />
-          <meta property="og:description" content={metadata.description} />
-          <meta property="og:url" content={metadata.canonicalUrl} />
-          <meta property="og:type" content="website" />
-          
-          <script type="application/ld+json">
-            {structuredData}
-          </script>
-        </Helmet>
+          {console.log('Structured Data:', structuredData)}
+          <Helmet>
+            <title>{metadata.title}</title>
+            <meta name="description" content={metadata.description} />
+            <link rel="canonical" href={metadata.canonicalUrl} />
+            <meta name="robots" content="index, follow"/>
+            <meta property="og:title" content={metadata.title} />
+            <meta property="og:description" content={metadata.description} />
+            <meta property="og:url" content={metadata.canonicalUrl} />
+            <meta property="og:type" content="website" />
+            <script type="application/ld+json">
+              {structuredData}
+            </script>
+          </Helmet>
         </>
       )}
-
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-green-600 p-6 shadow-md">
-        <div className="container mx-auto">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-grow">
+  
+      <div className="min-h-screen bg-gray-100">
+        <div className="bg-green-600 p-4 md:p-6 shadow-md">
+          <div className="container mx-auto">
+            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="Go back to previous page"
+                className="group bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+              >
+                <ArrowLeft className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform duration-200" />
+              </button>
+              <div className="relative flex-grow w-full md:ml-4">
+                <input
+                  type="text"
+                  placeholder="What job are you looking for?"
+                  className="w-full p-3 pr-10 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <Search className="absolute right-3 top-3 text-green-600" />
+              </div>
               <input
                 type="text"
-                placeholder="What job are you looking for?"
-                className="w-full p-3 pr-10 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleKeyDown}
+                placeholder="Cambridge"
+                className="w-full md:w-48 p-3 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
+                value="Cambridge"
+                readOnly={true}
               />
-              <Search className="absolute right-3 top-3 text-green-600" />
+              <button
+                onClick={handleSearch}
+                className="w-full md:w-auto bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 transition duration-300"
+              >
+                Search Jobs
+              </button>
             </div>
-            <input
-              type="text"
-              placeholder="Cambridge"
-              className="w-48 p-3 rounded-lg border-2 border-green-500 focus:outline-none focus:border-green-700"
-              value="Cambridge"
-              readOnly={true}
-            />
-            <button
-              onClick={handleSearch}
-              className="bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 transition duration-300"
-            >
-              Search Jobs
-            </button>
           </div>
         </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-1/4 min-h-6">
-
+  
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row gap-8">
+          <div className="hidden md:block w-full md:w-1/4 gap-x-4">
             <div className="bg-white py-5 rounded-lg shadow-md p-6">
               <h3 className="font-bold text-xl mb-4 text-gray-800">Explore Categories</h3>
               {!loadingCategories && (
@@ -198,7 +202,7 @@ const AllJobsFromCategoryPage = () => {
                     <div key={category}>
                       <h3 className="text-lg font-medium mb-3 text-gray-700">{category}</h3>
                       <ul className="space-y-2">
-                        {items.map(item => (
+                        {items.map((item) => (
                           <li key={item.pageName}>
                             <a
                               href={`/category/${item.keyword}`}
@@ -215,19 +219,44 @@ const AllJobsFromCategoryPage = () => {
               )}
             </div>
           </div>
-
-          <div className="w-full md:flex-grow">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500"></div>
+            <div className="w-full md:flex-grow">
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500"></div>
+                </div>
+              ) : (
+                <StaticJobsRenderer htmlContent={staticHtml} />
+              )}
+            </div>
+            <div className="block md:hidden mt-8">
+          <div className="bg-white py-5 rounded-lg shadow-md p-6">
+            <h3 className="font-bold text-xl mb-4 text-gray-800">Explore Categories</h3>
+            {!loadingCategories && (
+              <div className="space-y-6">
+                {Object.entries(categories).map(([category, items]) => (
+                  <div key={category}>
+                    <h3 className="text-lg font-medium mb-3 text-gray-700">{category}</h3>
+                    <ul className="space-y-2">
+                      {items.map((item) => (
+                        <li key={item.pageName}>
+                          <a
+                            href={`/category/${item.keyword}`}
+                            className="text-green-600 hover:text-green-800 hover:underline text-sm transition duration-150 ease-in-out"
+                          >
+                            {item.keyword} jobs in Cambridge
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <StaticJobsRenderer htmlContent={staticHtml} />
             )}
           </div>
         </div>
+          </div>
+        </div>
       </div>
-    </div>
     </>
   );
 };
